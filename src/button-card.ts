@@ -41,6 +41,7 @@ import {
   ButtonCardEmbeddedCardsConfig,
 } from './types';
 import { actionHandler } from './action-handler';
+import { handleActionConfig } from './handle-action';
 import {
   computeDomain,
   computeEntity,
@@ -639,7 +640,15 @@ class ButtonCard extends LitElement {
     const tap_action = this._getTemplateOrValue(state, this._config!.tap_action!.action);
     const hold_action = this._getTemplateOrValue(state, this._config!.hold_action!.action);
     const double_tap_action = this._getTemplateOrValue(state, this._config!.double_tap_action!.action);
-    if (tap_action != 'none' || hold_action != 'none' || double_tap_action != 'none') {
+    const press_action = this._getTemplateOrValue(state, this._config!.press_action!.action);
+    const release_action = this._getTemplateOrValue(state, this._config!.release_action!.action);
+    if (
+      tap_action != 'none' ||
+      hold_action != 'none' ||
+      double_tap_action != 'none' ||
+      press_action != 'none' ||
+      release_action != 'none'
+    ) {
       clickable = true;
     } else {
       clickable = false;
@@ -943,6 +952,8 @@ class ButtonCard extends LitElement {
       type: 'custom:button-card',
       hold_action: { action: 'none' },
       double_tap_action: { action: 'none' },
+      press_action: { action: 'none' },
+      release_action: { action: 'none' },
       layout: 'vertical',
       size: '40%',
       color_type: 'icon',
@@ -1068,6 +1079,12 @@ class ButtonCard extends LitElement {
   private _handleAction(ev: any): void {
     if (ev.detail && ev.detail.action) {
       switch (ev.detail.action) {
+        case 'press':
+          this._handlePress(ev);
+          break;
+        case 'release':
+          this._handleRelease(ev);
+          break;
         case 'tap':
           this._handleTap(ev);
           break;
@@ -1081,6 +1098,28 @@ class ButtonCard extends LitElement {
           break;
       }
     }
+  }
+
+  private _handlePress(ev): void {
+    const config = ev.target.config;
+    if (!config) return;
+    handleActionConfig(
+      this,
+      this._hass!,
+      this._evalActions(config, 'press_action'),
+      this._evalActions(config, 'press_action').press_action,
+    );
+  }
+
+  private _handleRelease(ev): void {
+    const config = ev.target.config;
+    if (!config) return;
+    handleActionConfig(
+      this,
+      this._hass!,
+      this._evalActions(config, 'release_action'),
+      this._evalActions(config, 'release_action').release_action,
+    );
   }
 
   private _handleTap(ev): void {
